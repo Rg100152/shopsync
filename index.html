@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopSync | Automated Dropshipping & Inventory Management System</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts: Inter & Space Grotesk -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+          },
+          colors: {
+            cyber: {
+              dark: '#07090e',
+              card: '#111622',
+              cyan: '#00f2fe',
+              purple: '#a855f7',
+              green: '#10b981',
+              orange: '#ff6b00'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #07090e;
+      color: #f1f5f9;
+      overflow-x: hidden;
+    }
+
+    /* Glassmorphism Utilities */
+    .glass {
+      background: rgba(17, 22, 34, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-heavy {
+      background: rgba(10, 14, 23, 0.92);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(0, 242, 254, 0.18);
+    }
+
+    /* SDD Specified Animations */
+    /* 1. Add to Cart Button Tap & Success */
+    .add-to-cart-btn {
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .add-to-cart-btn:active {
+      transform: scale(0.92);
+    }
+    .added-success {
+      background: linear-gradient(135deg, #10b981, #059669) !important;
+      color: #ffffff !important;
+      border-color: #34d399 !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+    }
+
+    /* 2. Out of Stock Overlay & Pulse */
+    .out-of-stock-overlay {
+      animation: fadeIn 0.4s ease-in-out forwards;
+      background: rgba(220, 38, 38, 0.55);
+      backdrop-filter: blur(4px);
+    }
+    .out-of-stock-text {
+      animation: pulseScale 1.5s infinite ease-in-out;
+    }
+    @keyframes pulseScale {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* 3. Hero Slide & Zoom */
+    .hero-text-slide {
+      animation: slideInLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slideInLeft {
+      0% { transform: translateX(-60px); opacity: 0; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+
+    /* 4. Skeleton Shimmer Loader */
+    .skeleton-shimmer {
+      background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* 5. Product Card Hover Zoom */
+    .product-card .product-img {
+      transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .product-card:hover .product-img {
+      transform: scale(1.09);
+    }
+
+    /* Neon Glow Shadows */
+    .neon-cyan {
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
+    }
+    .neon-orange {
+      box-shadow: 0 0 25px rgba(255, 107, 0, 0.35);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #07090e;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00f2fe;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-cyan-500 selection:text-black">
+
+  <!-- TOP PROMO ANNOUNCEMENT BAR -->
+  <div class="bg-gradient-to-r from-orange-600 via-pink-600 to-purple-700 text-white text-xs sm:text-sm py-2 px-4 text-center font-medium flex items-center justify-center gap-3 z-50">
+    <span class="bg-black/30 px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider animate-pulse">🔥 Live Sale</span>
+    <span>Halloween & Activewear Mega Dropshipping Sale — <strong>Extra 30% to 70% OFF</strong> Auto-Applied!</span>
+    <button onclick="switchPage('admin-sync')" class="hidden md:inline-flex items-center gap-1 underline hover:text-cyan-200 text-xs ml-2">
+      <i class="fa-solid fa-rotate"></i> Test Supplier Sync
+    </button>
+  </div>
+
+  <!-- STICKY GLASSMORPHIC NAVBAR -->
+  <header class="glass sticky top-0 z-40 border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo + Live API Sync Badge -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchPage('storefront')">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 flex items-center justify-center shadow-lg neon-cyan">
+          <i class="fa-solid fa-boxes-packing text-black text-xl"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-display text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-cyan-200 to-purple-400 bg-clip-text text-transparent">ShopSync</span>
+            <span class="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              API Synced
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Automated Dropshipping Ecosystem</p>
+        </div>
+      </div>
+
+      <!-- Instant Search Bar -->
+      <div class="flex-1 max-w-md hidden md:block">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input 
+            id="searchInput"
+            type="text" 
+            oninput="handleSearch(this.value)"
+            placeholder="Search humidifiers, Gymshark activewear, gadgets..." 
+            class="w-full bg-slate-900/90 border border-slate-700/80 focus:border-cyan-400 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none transition"
+          >
+        </div>
+      </div>
+
+      <!-- Main Navigation Links (Connecting All Modules from SDD) -->
+      <nav class="hidden lg:flex items-center gap-1 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800">
+        <button onclick="switchPage('storefront')" id="nav-storefront" class="nav-tab px-3.5 py-2 rounded-lg text-xs font-semibold transition bg-cyan-500 text-slate-950">
+          <i class="fa-solid fa-store mr-1"></i> Storefront
+        </button>
+        <button onclick="switchPage('dsers-import')" id="nav-dsers-import" class="nav-tab px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition">
+          <i class="fa-solid fa-cloud-arrow-down mr-1 text-orange-400"></i> DSers Import
+        </button>
+        <button onclick="switchPage('admin-sync')" id="nav-admin-sync" class="nav-tab px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition">
+          <i class="fa-solid fa-arrows-rotate mr-1 text-emerald-400"></i> Inventory Sync
+        </button>
+        <button onclick="switchPage('user-dashboard')" id="nav-user-dashboard" class="nav-tab px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition">
+          <i class="fa-solid fa-box-open mr-1 text-purple-400"></i> My Orders
+        </button>
+        <button onclick="switchPage('sdd-blueprint')" id="nav-sdd-blueprint" class="nav-tab px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-300 hover:text-white transition">
+          <i class="fa-solid fa-diagram-project mr-1 text-cyan-400"></i> SDD & DFD
+        </button>
+      </nav>
+
+      <!-- Right Action Icons: Wishlist & Cart -->
+      <div class="flex items-center gap-2.5">
+        <button onclick="switchPage('user-dashboard')" class="relative p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/70 text-slate-200 transition" title="Wishlist & Orders">
+          <i class="fa-regular fa-heart text-pink-400"></i>
+          <span id="wishlistBadge" class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-pink-500 text-white text-[10px] font-bold flex items-center justify-center">2</span>
+        </button>
+
+        <button onclick="toggleCart(true)" class="relative flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-bold text-sm shadow-lg transition">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span class="hidden sm:inline">Cart</span>
+          <span id="cartCountBadge" class="px-2 py-0.5 text-xs rounded-full bg-slate-950 text-cyan-300 font-extrabold">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Scroller -->
+    <div class="lg:hidden flex items-center gap-2 overflow-x-auto px-4 py-2.5 border-t border-white/5 bg-slate-950/80">
+      <button onclick="switchPage('storefront')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 whitespace-nowrap">
+        🏪 Storefront
+      </button>
+      <button onclick="switchPage('dsers-import')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/30 whitespace-nowrap">
+        ⚡ DSers Importer
+      </button>
+      <button onclick="switchPage('admin-sync')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
+        🔄 Inventory Engine
+      </button>
+      <button onclick="switchPage('user-dashboard')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap">
+        📦 Track Orders
+      </button>
+      <button onclick="switchPage('sdd-blueprint')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 whitespace-nowrap">
+        📐 SDD / DFD Docs
+      </button>
+    </div>
+  </header>
+
+  <!-- TOAST NOTIFICATION CONTAINER (Top-Right Slide In) -->
+  <div id="toastContainer" class="fixed top-24 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="flex-1">
+
+    <!-- ========================================== -->
+    <!-- PAGE 1: CUSTOMER STOREFRONT (HOME & SHOP)  -->
+    <!-- ========================================== -->
+    <section id="page-storefront" class="page-view">
+      
+      <!-- HERO SECTION WITH USER'S BACKGROUND VIDEO & ANIMATED GIF -->
+      <div class="relative min-h-[540px] lg:min-h-[600px] w-full overflow-hidden flex items-center border-b border-white/10">
+        <!-- User Provided Background Video -->
+        <video 
+          autoplay 
+          loop 
+          muted 
+          playsinline 
+          class="absolute inset-0 w-full h-full object-cover scale-105 opacity-55"
+          poster="https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&w=1600&q=80"
+        >
+          <source src="https://cdn.svgator.com/images/2026/02/website-animation-example-2.mp4" type="video/mp4">
+        </video>
+
+        <!-- Dark Cyberpunk Radial Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-slate-950/40"></div>
+
+        <!-- Hero Foreground Content -->
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          
+          <!-- Left Column: Sale Text & Call to Action -->
+          <div class="lg:col-span-7 space-y-6 hero-text-slide">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-300 text-xs font-bold uppercase tracking-widest">
+              <i class="fa-solid fa-bolt"></i> Halloween & Activewear Mega Drop
+            </div>
+
+            <h1 class="font-display text-4xl sm:text-6xl font-extrabold tracking-tight leading-none text-white">
+              NEXT-GEN <br>
+              <span class="bg-gradient-to-r from-cyan-400 via-purple-400 to-orange-400 bg-clip-text text-transparent">
+                DROPSHIPPING
+              </span>
+              STOREFRONT
+            </h1>
+
+            <p class="text-slate-300 text-base sm:text-lg max-w-xl leading-relaxed">
+              Real-time stock synchronization with <strong>AliExpress, DSers & Gymshark Collective</strong>. Zero stockouts, automated margin protection, and instant global fulfillment.
+            </p>
+
+            <!-- Hero CTA Buttons -->
+            <div class="flex flex-wrap items-center gap-4 pt-2">
+              <a href="#productGridSection" class="px-7 py-4 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-400 hover:to-pink-500 text-white font-bold text-sm tracking-wide shadow-lg neon-orange transition flex items-center gap-2">
+                <span>SHOP 70% OFF SALE</span>
+                <i class="fa-solid fa-arrow-right"></i>
+              </a>
+              <button onclick="switchPage('dsers-import')" class="px-6 py-4 rounded-xl glass hover:bg-white/10 text-cyan-300 font-semibold text-sm border border-cyan-500/30 transition flex items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Import from AliExpress (DSers)</span>
+              </button>
+            </div>
+
+            <!-- Live Metrics Strip -->
+            <div class="grid grid-cols-3 gap-4 pt-4 max-w-lg border-t border-white/10">
+              <div>
+                <p class="text-2xl font-display font-bold text-cyan-400" id="heroSyncCount">100%</p>
+                <p class="text-xs text-slate-400">Real-Time Stock Accuracy</p>
+              </div>
+              <div>
+                <p class="text-2xl font-display font-bold text-emerald-400">15 Min</p>
+                <p class="text-xs text-slate-400">Auto Cron API Sync</p>
+              </div>
+              <div>
+                <p class="text-2xl font-display font-bold text-orange-400">20 Pages</p>
+                <p class="text-xs text-slate-400">Connected Architecture</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: User's Animated GIF Showcase Card ("Let's Move") -->
+          <div class="lg:col-span-5 flex flex-col items-center">
+            <div class="glass-heavy p-5 rounded-3xl border border-cyan-500/30 shadow-2xl w-full max-w-md relative overflow-hidden group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                  Activewear & Motion Series
+                </span>
+                <span class="text-[11px] bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-500/30">
+                  EXTRA 30% OFF
+                </span>
+              </div>
+
+              <!-- User Provided Animated GIF -->
+              <div class="rounded-2xl overflow-hidden bg-slate-900/90 border border-white/10 flex items-center justify-center p-2">
+                <img 
+                  src="https://cdn.svgator.com/images/2024/10/lets-move-text-animation.gif" 
+                  alt="Let's Move Animated Banner" 
+                  class="w-full h-56 sm:h-64 object-contain rounded-xl group-hover:scale-105 transition duration-500"
+                  onerror="this.src='https://placehold.co/600x400/0f172a/00f2fe?text=Lets+Move+Activewear'"
+                >
+              </div>
+
+              <div class="mt-4 flex items-center justify-between">
+                <div>
+                  <h3 class="font-bold text-white text-sm">Gymshark & Be Activewear Collection</h3>
+                  <p class="text-xs text-slate-400">Auto-synced supplier catalog</p>
+                </div>
+                <button onclick="filterCategory('Activewear')" class="px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs transition">
+                  Explore
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- LIVE INVENTORY ALERT STRIP -->
+      <div class="bg-slate-900/90 border-b border-white/10 py-3 px-4">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4 text-xs">
+          <div class="flex items-center gap-2 text-slate-300">
+            <i class="fa-solid fa-satellite-dish text-cyan-400 animate-pulse"></i>
+            <span><strong>Supplier Sync Engine:</strong> Connected to AliExpress, DSers, and CJ Dropshipping.</span>
+            <span id="lastSyncTimeLabel" class="text-emerald-400 font-semibold">(Last synced: Just now)</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="triggerGlobalSync()" class="px-3 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-semibold transition flex items-center gap-1.5">
+              <i class="fa-solid fa-rotate" id="quickSyncIcon"></i> Sync Supplier Stock Now
+            </button>
+            <button onclick="simulateRandomStockout()" class="px-3 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 font-semibold transition">
+              ⚡ Simulate Supplier Stockout
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCT CATALOG & CATEGORY FILTERS (Inspired by User's 6 Screenshots) -->
+      <div id="productGridSection" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-cyan-400">Live Synced Storefront</span>
+            <h2 class="font-display text-3xl font-bold text-white mt-1">Top Rated Dropshipping Products</h2>
+          </div>
+
+          <!-- Category Filter Buttons -->
+          <div class="flex flex-wrap gap-2" id="categoryFilterBar">
+            <button onclick="filterCategory('All')" data-cat="All" class="cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-cyan-400 text-slate-950 transition">
+              All Products
+            </button>
+            <button onclick="filterCategory('Home & Diffusers')" data-cat="Home & Diffusers" class="cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+              💧 Humidifiers & Home
+            </button>
+            <button onclick="filterCategory('Activewear')" data-cat="Activewear" class="cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+              🏋️ Activewear (Gymshark/LaSculpte)
+            </button>
+            <button onclick="filterCategory('Tech & Gadgets')" data-cat="Tech & Gadgets" class="cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+              🔌 Tech & Gadgets
+            </button>
+            <button onclick="filterCategory('Fashion & Luxury')" data-cat="Fashion & Luxury" class="cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+              🕶️ Fashion & Perfume
+            </button>
+          </div>
+        </div>
+
+        <!-- Shimmer Skeleton Loader (Shown during API Sync) -->
+        <div id="productSkeletonGrid" class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="h-96 rounded-2xl skeleton-shimmer"></div>
+          <div class="h-96 rounded-2xl skeleton-shimmer"></div>
+          <div class="h-96 rounded-2xl skeleton-shimmer"></div>
+          <div class="h-96 rounded-2xl skeleton-shimmer"></div>
+        </div>
+
+        <!-- Dynamic Product Grid -->
+        <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Populated by JavaScript -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================================================== -->
+    <!-- PAGE 2: DSERS / ALIEXPRESS 1-CLICK PRODUCT IMPORTER  -->
+    <!-- (Directly inspired by Screenshot 1: Add to DSers)    -->
+    <!-- ==================================================== -->
+    <section id="page-dsers-import" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="glass-heavy rounded-3xl p-6 sm:p-10 border border-orange-500/30">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-white/10">
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 text-xs font-bold mb-2">
+              <i class="fa-solid fa-plug"></i> Official DSers API Integration
+            </div>
+            <h2 class="font-display text-3xl font-bold text-white">AliExpress to ShopSync 1-Click Importer</h2>
+            <p class="text-slate-400 text-sm mt-1">
+              Import winning products directly from AliExpress suppliers with automatic price markup & real-time stock syncing.
+            </p>
+          </div>
+
+          <!-- Simulated DSers Popup Banner (From Screenshot 1) -->
+          <div id="dsersSuccessBanner" class="hidden items-center gap-4 bg-white text-slate-900 px-6 py-4 rounded-2xl shadow-2xl border-2 border-emerald-500 animate-bounce">
+            <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center text-lg font-bold">
+              <i class="fa-solid fa-check"></i>
+            </div>
+            <div>
+              <p class="text-xs font-extrabold text-orange-500 uppercase tracking-wider">DSers Official</p>
+              <p class="text-sm font-bold text-slate-900">AliExpress product import success!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Product Importer Form -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
+          <div class="lg:col-span-5 space-y-4 bg-slate-900/90 p-6 rounded-2xl border border-white/10">
+            <h3 class="font-bold text-lg text-white flex items-center gap-2">
+              <i class="fa-solid fa-link text-orange-400"></i> Custom AliExpress Product Import
+            </h3>
+            <div>
+              <label class="text-xs text-slate-400 font-semibold">AliExpress Product Title</label>
+              <input id="importTitle" type="text" value="Portable 300ml Ultrasonic Aroma Diffuser Romantic Light" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-slate-400 font-semibold">Supplier Cost ($)</label>
+                <input id="importCost" type="number" value="11.18" step="0.01" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white">
+              </div>
+              <div>
+                <label class="text-xs text-slate-400 font-semibold">Store Selling Price ($)</label>
+                <input id="importPrice" type="number" value="24.99" step="0.01" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-emerald-400 font-bold">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-slate-400 font-semibold">Initial Supplier Stock</label>
+                <input id="importStock" type="number" value="45" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white">
+              </div>
+              <div>
+                <label class="text-xs text-slate-400 font-semibold">Category</label>
+                <select id="importCategory" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white">
+                  <option value="Home & Diffusers">Home & Diffusers</option>
+                  <option value="Activewear">Activewear</option>
+                  <option value="Tech & Gadgets">Tech & Gadgets</option>
+                  <option value="Fashion & Luxury">Fashion & Luxury</option>
+                </select>
+              </div>
+            </div>
+            <button onclick="importCustomToDSers()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white font-extrabold text-sm shadow-lg transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-cloud-arrow-down"></i> Add to DSers & Push to Store
+            </button>
+          </div>
+
+          <!-- Ready-to-Import AliExpress Supplier Catalog -->
+          <div class="lg:col-span-7 space-y-4">
+            <h3 class="font-bold text-lg text-white">Trending AliExpress / Inspire Uplift Catalog (1-Click Import)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="supplierPresetsGrid">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- PAGE 3: ADMIN INVENTORY SYNC ENGINE (Page 20 from User SDD)-->
+    <!-- ========================================================== -->
+    <section id="page-admin-sync" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+      
+      <!-- Top Admin KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="glass p-6 rounded-2xl border border-emerald-500/30">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase text-slate-400">Total Store Revenue</span>
+            <i class="fa-solid fa-dollar-sign text-emerald-400 bg-emerald-500/10 p-2.5 rounded-xl"></i>
+          </div>
+          <p class="text-3xl font-display font-bold text-white mt-3" id="adminRevenue">$14,892.50</p>
+          <p class="text-xs text-emerald-400 mt-1">↑ +24.5% auto-fulfilled</p>
+        </div>
+
+        <div class="glass p-6 rounded-2xl border border-cyan-500/30">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase text-slate-400">Synced Products</span>
+            <i class="fa-solid fa-boxes-stacked text-cyan-400 bg-cyan-500/10 p-2.5 rounded-xl"></i>
+          </div>
+          <p class="text-3xl font-display font-bold text-white mt-3" id="adminTotalProducts">8</p>
+          <p class="text-xs text-cyan-400 mt-1">Real-time webhook active</p>
+        </div>
+
+        <div class="glass p-6 rounded-2xl border border-red-500/40">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase text-slate-400">Out of Stock / Alerts</span>
+            <i class="fa-solid fa-triangle-exclamation text-red-400 bg-red-500/10 p-2.5 rounded-xl"></i>
+          </div>
+          <p class="text-3xl font-display font-bold text-red-400 mt-3" id="adminLowStockCount">1 Product</p>
+          <p class="text-xs text-slate-400 mt-1">Auto-marked on storefront</p>
+        </div>
+
+        <div class="glass p-6 rounded-2xl border border-purple-500/30">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase text-slate-400">Supplier API Status</span>
+            <i class="fa-solid fa-server text-purple-400 bg-purple-500/10 p-2.5 rounded-xl"></i>
+          </div>
+          <p class="text-xl font-display font-bold text-emerald-400 mt-3 flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span> 3 Connected
+          </p>
+          <p class="text-xs text-slate-400 mt-1">AliExpress • CJ • Gymshark</p>
+        </div>
+      </div>
+
+      <!-- Real-Time Inventory Sync Control Panel -->
+      <div class="glass-heavy rounded-3xl p-6 sm:p-8 border border-cyan-500/30">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/10">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-cyan-400">SDD Module C — Page 20</span>
+            <h2 class="font-display text-2xl sm:text-3xl font-bold text-white mt-1">Automated Supplier Inventory Sync Engine</h2>
+            <p class="text-sm text-slate-400">
+              Change stock to <code class="text-red-400 font-bold">0</code> below to immediately test the red pulsing <strong>"OUT OF STOCK"</strong> overlay on the Storefront!
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="triggerGlobalSync()" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-extrabold text-sm shadow-lg transition flex items-center gap-2">
+              <i class="fa-solid fa-rotate" id="adminSyncSpinIcon"></i>
+              <span id="adminSyncBtnText">Run Full API Sync Now</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Animated Progress Bar during Sync -->
+        <div id="syncProgressContainer" class="hidden my-6 bg-slate-900 p-4 rounded-2xl border border-cyan-500/30">
+          <div class="flex justify-between text-xs font-semibold text-cyan-300 mb-2">
+            <span id="syncStatusStep">Fetching real-time stock quantities from AliExpress & DSers API...</span>
+            <span id="syncPercent">45%</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+            <div id="syncProgressBar" class="h-full bg-gradient-to-r from-cyan-400 via-emerald-400 to-purple-500 transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Interactive Inventory Table -->
+        <div class="overflow-x-auto mt-6">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 text-xs uppercase text-slate-400">
+                <th class="py-3.5 px-4">Product</th>
+                <th class="py-3.5 px-4">Supplier API</th>
+                <th class="py-3.5 px-4">Supplier Price</th>
+                <th class="py-3.5 px-4">Store Price (Margin)</th>
+                <th class="py-3.5 px-4">Live Stock Qty</th>
+                <th class="py-3.5 px-4">Storefront Status</th>
+                <th class="py-3.5 px-4 text-right">Quick Stock Simulator</th>
+              </tr>
+            </thead>
+            <tbody id="adminInventoryTableBody" class="divide-y divide-white/5 text-sm">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- PAGE 4: USER DASHBOARD, ORDER TRACKING & WISHLIST          -->
+    <!-- ========================================================== -->
+    <section id="page-user-dashboard" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+      <div class="glass-heavy rounded-3xl p-6 sm:p-8 border border-purple-500/30">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-purple-400">Pages 13, 14 & 15 — Customer Account</span>
+            <h2 class="font-display text-3xl font-bold text-white mt-1">Live Order Tracking & Auto-Fulfillment</h2>
+            <p class="text-sm text-slate-400">Orders placed on ShopSync are automatically forwarded to suppliers with live tracking IDs.</p>
+          </div>
+          <button onclick="switchPage('storefront')" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition">
+            ← Continue Shopping
+          </button>
+        </div>
+
+        <div id="ordersListContainer" class="mt-6 space-y-4">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- PAGE 5: INTERACTIVE SDD, DFD & WATERFALL MODEL PRESENTATION-->
+    <!-- ========================================================== -->
+    <section id="page-sdd-blueprint" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+      
+      <!-- Header -->
+      <div class="glass-heavy rounded-3xl p-8 border border-cyan-500/30">
+        <span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold uppercase">Project Documentation View</span>
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-white mt-3">System Design Document (SDD) & Data Flow Architecture</h2>
+        <p class="text-slate-300 mt-2 max-w-3xl">
+          Interactive visualization of your <strong>Dropshipping Store with Automated Inventory Management</strong> including DFD Level 0, DFD Level 1, Database Schema, and Waterfall/Agile SDLC phases.
+        </p>
+
+        <!-- Interactive DFD Level 1 Diagram -->
+        <div class="mt-8 bg-slate-950/90 p-6 rounded-2xl border border-white/10">
+          <h3 class="font-display text-lg font-bold text-cyan-400 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-sitemap"></i> Live Data Flow Diagram (DFD Level 1) — Automated Inventory Sync
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center text-center">
+            <div class="p-4 rounded-xl bg-orange-500/10 border border-orange-500/40">
+              <i class="fa-solid fa-warehouse text-2xl text-orange-400 mb-2"></i>
+              <p class="font-bold text-sm text-white">1. Supplier API</p>
+              <p class="text-[11px] text-slate-400">AliExpress / DSers / CJ</p>
+            </div>
+            <div class="text-cyan-400 font-bold text-xs flex flex-col items-center">
+              <span>JSON Stock & Price</span>
+              <i class="fa-solid fa-arrow-right-long text-xl my-1 animate-pulse"></i>
+              <span>Every 15 Mins</span>
+            </div>
+            <div class="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/40">
+              <i class="fa-solid fa-gears text-2xl text-cyan-400 mb-2"></i>
+              <p class="font-bold text-sm text-white">2. Sync Engine (1.0)</p>
+              <p class="text-[11px] text-slate-400">Node.js / Python Cron</p>
+            </div>
+            <div class="text-emerald-400 font-bold text-xs flex flex-col items-center">
+              <span>Auto Update DB</span>
+              <i class="fa-solid fa-arrow-right-long text-xl my-1 animate-pulse"></i>
+              <span>D1: Products Table</span>
+            </div>
+            <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/40">
+              <i class="fa-solid fa-store text-2xl text-emerald-400 mb-2"></i>
+              <p class="font-bold text-sm text-white">3. Customer UI</p>
+              <p class="text-[11px] text-slate-400">In Stock / Out of Stock Badge</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Database Schema & Waterfall Phases Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+          
+          <!-- SQL Schema Box -->
+          <div class="bg-slate-900/90 p-6 rounded-2xl border border-white/10">
+            <h3 class="font-bold text-white text-lg mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-database text-purple-400"></i> PostgreSQL Database Schema (D1 - D4)
+            </h3>
+            <pre class="text-xs text-cyan-300 bg-slate-950 p-4 rounded-xl overflow-x-auto leading-relaxed"><code>CREATE TABLE suppliers (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),       -- e.g., 'AliExpress DSers'
+  api_key TEXT,
+  sync_frequency INT DEFAULT 15
+);
+
+CREATE TABLE products (
+  id SERIAL PRIMARYKEY,
+  name VARCHAR(255),
+  price DECIMAL(10,2),
+  supplier_id INT REFERENCES suppliers(id),
+  supplier_product_id VARCHAR(100),
+  stock_qty INT DEFAULT 0,
+  stock_status VARCHAR(20) -- 'IN_STOCK' | 'OUT_OF_STOCK'
+);</code></pre>
+          </div>
+
+          <!-- Waterfall SDLC Phases -->
+          <div class="bg-slate-900/90 p-6 rounded-2xl border border-white/10">
+            <h3 class="font-bold text-white text-lg mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-water text-blue-400"></i> Waterfall & Agile SDLC Phases
+            </h3>
+            <ul class="space-y-2.5 text-xs text-slate-300">
+              <li class="p-2.5 rounded-lg bg-slate-950 border-l-4 border-cyan-400">
+                <strong>Phase 1: Requirements Analysis</strong> — SRS, DFD Level 0/1 & 20-Page Sitemap finalized.
+              </li>
+              <li class="p-2.5 rounded-lg bg-slate-950 border-l-4 border-purple-400">
+                <strong>Phase 2: System Design</strong> — Next.js App Router, PostgreSQL Schema, Framer Motion UI specs.
+              </li>
+              <li class="p-2.5 rounded-lg bg-slate-950 border-l-4 border-emerald-400">
+                <strong>Phase 3: Implementation</strong> — Storefront, DSers Importer, & Automated Inventory Cron Engine.
+              </li>
+              <li class="p-2.5 rounded-lg bg-slate-950 border-l-4 border-orange-400">
+                <strong>Phase 4 & 5: Testing & Deployment</strong> — Stockout simulation testing (Stock = 0 overlay) & Live Cloud Hosting.
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- SLIDE-OVER SHOPPING CART & CHECKOUT DRAWER -->
+  <div id="cartDrawerBackdrop" onclick="toggleCart(false)" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden transition-opacity"></div>
+  <aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full max-w-md glass-heavy z-50 translate-x-full transition-transform duration-300 flex flex-col border-l border-cyan-500/30">
+    
+    <!-- Drawer Header -->
+    <div class="p-5 border-b border-white/10 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <i class="fa-solid fa-bag-shopping text-cyan-400 text-xl"></i>
+        <h3 class="font-display text-xl font-bold text-white">Your Synced Cart</h3>
+      </div>
+      <button onclick="toggleCart(false)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Cart Items List -->
+    <div id="cartItemsContainer" class="flex-1 overflow-y-auto p-5 space-y-4">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Checkout Form Section inside Drawer -->
+    <div class="p-5 border-t border-white/10 bg-slate-950/90 space-y-4">
+      <div class="space-y-1.5 text-sm">
+        <div class="flex justify-between text-slate-400">
+          <span>Supplier Direct Shipping</span>
+          <span class="text-emerald-400 font-semibold">FREE (AliExpress Standard)</span>
+        </div>
+        <div class="flex justify-between text-lg font-bold text-white pt-2 border-t border-white/10">
+          <span>Total Amount</span>
+          <span id="cartTotalPrice" class="text-cyan-400">$0.00</span>
+        </div>
+      </div>
+
+      <!-- Quick Checkout Inputs -->
+      <div class="space-y-2.5 pt-2">
+        <input id="checkoutName" type="text" placeholder="Customer Full Name" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-cyan-400 focus:outline-none">
+        <input id="checkoutAddress" type="text" placeholder="Delivery Address & City" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:border-cyan-400 focus:outline-none">
+      </div>
+
+      <button onclick="placeCustomerOrder()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-sm shadow-lg transition flex items-center justify-center gap-2">
+        <i class="fa-solid fa-lock"></i>
+        <span>Complete Order & Auto-Forward to Supplier</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- FOOTER WITH 20-PAGE SITEMAP LINKS (From SDD Blueprint) -->
+  <footer class="bg-slate-950 border-t border-white/10 mt-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-xs">
+        <div>
+          <h4 class="font-bold text-white uppercase tracking-wider mb-3">1. Storefront Pages (1-7)</h4>
+          <ul class="space-y-2 text-slate-400">
+            <li><a href="#productGridSection" onclick="switchPage('storefront')" class="hover:text-cyan-400">Page 1: Home & Hero Video</a></li>
+            <li><a href="#productGridSection" onclick="filterCategory('Activewear')" class="hover:text-cyan-400">Page 2: Categories Filter</a></li>
+            <li><a href="#productGridSection" onclick="switchPage('storefront')" class="hover:text-cyan-400">Page 3 & 4: Product Grid & Detail</a></li>
+            <li><a href="javascript:void(0)" onclick="toggleCart(true)" class="hover:text-cyan-400">Page 5, 6 & 7: Cart & Checkout</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold text-white uppercase tracking-wider mb-3">2. Brand & Info (8-11)</h4>
+          <ul class="space-y-2 text-slate-400">
+            <li><a href="javascript:void(0)" onclick="showToast('About ShopSync: Automated Dropshipping Platform')" class="hover:text-cyan-400">Page 8: About Us</a></li>
+            <li><a href="javascript:void(0)" onclick="showToast('24/7 Supplier Support Active')" class="hover:text-cyan-400">Page 9 & 10: Contact & Help FAQ</a></li>
+            <li><a href="javascript:void(0)" onclick="switchPage('sdd-blueprint')" class="hover:text-cyan-400">Page 11: Dropshipping Blog</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold text-white uppercase tracking-wider mb-3">3. User Account (12-16)</h4>
+          <ul class="space-y-2 text-slate-400">
+            <li><a href="javascript:void(0)" onclick="switchPage('user-dashboard')" class="hover:text-cyan-400">Page 12 & 13: User Dashboard</a></li>
+            <li><a href="javascript:void(0)" onclick="switchPage('user-dashboard')" class="hover:text-cyan-400">Page 14: Live Order Tracking</a></li>
+            <li><a href="javascript:void(0)" onclick="switchPage('user-dashboard')" class="hover:text-cyan-400">Page 15 & 16: Wishlist & Security</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold text-white uppercase tracking-wider mb-3">4. Admin & Sync (17-20)</h4>
+          <ul class="space-y-2 text-slate-400">
+            <li><a href="javascript:void(0)" onclick="switchPage('admin-sync')" class="hover:text-cyan-400">Page 17: Admin KPI Dashboard</a></li>
+            <li><a href="javascript:void(0)" onclick="switchPage('dsers-import')" class="hover:text-cyan-400">Page 18: DSers Product Importer</a></li>
+            <li><a href="javascript:void(0)" onclick="switchPage('admin-sync')" class="hover:text-cyan-400">Page 19 & 20: Inventory Sync Engine</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
+        <p>© 2026 ShopSync Automated Dropshipping System. Built according to your SDD & DFD specifications.</p>
+        <p class="mt-2 sm:mt-0 text-cyan-400">Powered by Real-Time Supplier Inventory Sync</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================================== -->
+  <!-- COMPLETE APPLICATION LOGIC & AUTOMATED INVENTORY ENGINE    -->
+  <!-- ========================================================== -->
+  <script>
+    // 1. Initial Storefront Products (Directly matched to the User's 6 Uploaded Screenshots)
+    let products = [
+      {
+        id: 101,
+        name: "Portable 300ml Ultrasonic Aroma Humidifier with Romantic LED",
+        category: "Home & Diffusers",
+        supplier: "AliExpress (DSers)",
+        supplierCost: 11.18,
+        price: 22.99,
+        oldPrice: 34.99,
+        rating: 4.8,
+        reviews: 1243,
+        stock: 38,
+        badge: "DSers Top Import",
+        image: "https://images.unsplash.com/photo-1585565804112-f201f68c48b4?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        id: 102,
+        name: "Gymshark Vital Seamless 2.0 Activewear Set (Yellow / Teal)",
+        category: "Activewear",
+        supplier: "Gymshark Collective",
+        supplierCost: 28.00,
+        price: 54.00,
+        oldPrice: 78.00,
+        rating: 4.9,
+        reviews: 892,
+        stock: 19,
+        badge: "Extra 30% Off Sale",
+        image: "https://images.unsplash.com/photo-1518310383802-640c2de311b2?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        id: 103,
+        name: "Magnetic LED Glowing Fast Charging USB-C Cable",
+        category: "Tech & Gadgets",
+        supplier: "AliExpress Official",
+        supplierCost: 3.40,
+        price: 14.99,
+        oldPrice: 24.99,
+        rating: 4.7,
+        reviews: 640,
+        stock: 0, // Starts at 0 to immediately demonstrate the SDD Out of Stock Red Pulsing Overlay!
+        badge: "Sync Alert",
+        image: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        id: 104,
+        name: "LaSculpte & Brasilfit Tropical Sculpting Activewear Top",
+        category: "Activewear",
+        supplier: "Be Activewear Sync",
+        supplierCost: 22.50,
+        price: 45.99,
+        oldPrice: 65.00,
+        rating: 4.8,
+        reviews: 318,
+        stock: 14,
+        badge: "New Arrival",
+        image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        id: 105,
+        name: "Multi-Purpose Silicone Boil Over Spill Stopper Lid Cover",
+        category: "Home & Diffusers",
+        supplier: "Inspire Uplift",
+        supplierCost: 6.50,
+        price: 19.97,
+        oldPrice: 39.99,
+        rating: 4.9,
+        reviews: 512,
+        stock: 52,
+        badge: "Halloween 51% Off",
+        image: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        id: 106,
+        name: "Automatic Thermal Plastic Shoe Cover Dispenser Machine",
+        category: "Tech & Gadgets",
+        supplier: "Inspire Uplift",
+        supplierCost: 48.00,
+        price: 109.97,
+        oldPrice: 200.00,
+        rating: 4.8,
+        reviews: 274,
+        stock: 7,
+        badge: "45% Off Deal",
+        image: "https://images.unsplash.com/photo-1560769629-975ec94e6a86?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        id: 107,
+        name: "Vintage Ruby & Sapphire Crystal Artisan Perfume Flacon",
+        category: "Fashion & Luxury",
+        supplier: "CJ Dropshipping",
+        supplierCost: 14.20,
+        price: 36.50,
+        oldPrice: 55.00,
+        rating: 4.9,
+        reviews: 410,
+        stock: 23,
+        badge: "Best Seller",
+        image: "https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        id: 108,
+        name: "Retro Cobalt Blue Polarized Aviator Sunglasses",
+        category: "Fashion & Luxury",
+        supplier: "CJ Dropshipping",
+        supplierCost: 9.80,
+        price: 28.00,
+        oldPrice: 45.00,
+        rating: 4.6,
+        reviews: 195,
+        stock: 31,
+        badge: "Trending",
+        image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=800&q=80"
+      }
+    ];
+
+    // Ready-to-Import Presets for the DSers Importer Page
+    const supplierPresets = [
+      {
+        name: "Cat Self Groomer Wall Corner Massage Brush",
+        category: "Home & Diffusers",
+        supplier: "Inspire Uplift / AliExpress",
+        supplierCost: 4.20,
+        price: 19.97,
+        stock: 64,
+        image: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80"
+      },
+      {
+        name: "Doyoueven Rise & Evolve Seamless Gym Leggings",
+        category: "Activewear",
+        supplier: "Be Activewear API",
+        supplierCost: 24.00,
+        price: 52.00,
+        stock: 29,
+        image: "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?auto=format&fit=crop&w=800&q=80"
+      }
+    ];
+
+    let cart = [
+      { id: 101, qty: 1 }
+    ];
+
+    let orders = [
+      {
+        orderId: "ORD-98412",
+        customer: "Aarav Sharma",
+        items: "Portable 300ml Ultrasonic Aroma Humidifier (x1)",
+        total: "$22.99",
+        supplier: "AliExpress (DSers)",
+        trackingId: "LP005892144CN",
+        status: "In Transit — Synced via DSers"
+      }
+    ];
+
+    let activeCategory = "All";
+    let searchQuery = "";
+
+    // 2. Render Storefront Product Grid
+    function renderProducts() {
+      const grid = document.getElementById("productGrid");
+      const filtered = products.filter(p => {
+        const matchesCat = activeCategory === "All" || p.category === activeCategory;
+        const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              p.supplier.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCat && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-16 glass rounded-3xl">
+            <i class="fa-solid fa-box-open text-4xl text-slate-500 mb-3"></i>
+            <p class="text-lg font-bold text-white">No synced products match your filter</p>
+            <button onclick="filterCategory('All')" class="mt-4 px-5 py-2 rounded-xl bg-cyan-400 text-slate-950 font-bold text-xs">Reset Filters</button>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(product => {
+        const isOutOfStock = product.stock <= 0;
+        const isLowStock = product.stock > 0 && product.stock <= 10;
+
+        return `
+          <div class="product-card glass rounded-2xl overflow-hidden flex flex-col justify-between border border-white/10 hover:border-cyan-500/40 transition group">
+            <div>
+              <!-- Image Container with Hover Zoom & SDD Out-of-Stock Overlay -->
+              <div class="relative h-60 w-full overflow-hidden bg-slate-900">
+                <img 
+                  src="${product.image}" 
+                  alt="${product.name}" 
+                  class="product-img w-full h-full object-cover"
+                  onerror="this.src='https://placehold.co/600x400/1e293b/00f2fe?text=ShopSync+Product'"
+                >
+
+                <!-- Top Badges -->
+                <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+                  <span class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider bg-slate-950/85 text-cyan-300 border border-cyan-500/30 backdrop-blur-md">
+                    <i class="fa-solid fa-plug mr-1"></i>${product.supplier}
+                  </span>
+                  <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-orange-500 text-white w-fit">
+                    ${product.badge}
+                  </span>
+                </div>
+
+                <!-- Live Stock Pill -->
+                <div class="absolute bottom-3 left-3 z-10">
+                  ${
+                    isOutOfStock
+                      ? `<span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold bg-red-600 text-white uppercase">Stock: 0 (Supplier Sold Out)</span>`
+                      : isLowStock
+                      ? `<span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-500 text-slate-950">⚠️ Low Stock: Only ${product.stock} left</span>`
+                      : `<span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-500/90 text-slate-950">✓ In Stock (${product.stock} synced)</span>`
+                  }
+                </div>
+
+                <!-- SDD Animation #2: Red Transparent Pulsing Out of Stock Overlay -->
+                ${
+                  isOutOfStock
+                    ? `<div class="out-of-stock-overlay absolute inset-0 flex flex-col items-center justify-center z-20 p-4 text-center">
+                        <span class="out-of-stock-text px-4 py-2 rounded-xl bg-red-600/90 text-white font-display font-extrabold text-base tracking-widest border-2 border-white shadow-2xl">
+                          OUT OF STOCK
+                        </span>
+                        <span class="text-[11px] text-white font-semibold mt-2 bg-black/50 px-2.5 py-1 rounded">
+                          Auto-Disabled by Inventory Sync Engine
+                        </span>
+                      </div>`
+                    : ``
+                }
+              </div>
+
+              <!-- Card Body -->
+              <div class="p-4">
+                <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                  <span>${product.category}</span>
+                  <span class="text-amber-400 font-semibold"><i class="fa-solid fa-star"></i> ${product.rating} (${product.reviews})</span>
+                </div>
+                <h3 class="font-bold text-white text-sm line-clamp-2 leading-snug group-hover:text-cyan-300 transition">
+                  ${product.name}
+                </h3>
+              </div>
+            </div>
+
+            <!-- Price & SDD Animation #1: Add to Cart Button -->
+            <div class="p-4 pt-0 flex items-center justify-between gap-3">
+              <div>
+                <span class="text-lg font-display font-extrabold text-white">$${product.price.toFixed(2)}</span>
+                <span class="text-xs text-slate-500 line-through ml-1.5">$${product.oldPrice.toFixed(2)}</span>
+              </div>
+
+              ${
+                isOutOfStock
+                  ? `<button onclick="restockSingleProduct(${product.id})" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-xs transition">
+                      <i class="fa-solid fa-rotate mr-1"></i> Restock via API
+                    </button>`
+                  : `<button id="addBtn-${product.id}" onclick="handleAddToCart(${product.id}, this)" class="add-to-cart-btn px-4 py-2.5 rounded-xl bg-white hover:bg-cyan-400 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 shadow-md">
+                      <i class="fa-solid fa-cart-plus"></i>
+                      <span>Add to Cart</span>
+                    </button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      updateAdminMetrics();
+    }
+
+    // 3. SDD Animation #1: Add to Cart Tap & Green Tick Success
+    function handleAddToCart(productId, btnElement) {
+      const product = products.find(p => p.id === productId);
+      if (!product || product.stock <= 0) return;
+
+      const existing = cart.find(item => item.id === productId);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ id: productId, qty: 1 });
+      }
+
+      // Visual Green Checkmark Transformation
+      if (btnElement) {
+        const originalHTML = btnElement.innerHTML;
+        btnElement.classList.add("added-success");
+        btnElement.innerHTML = `<span>✓ Added!</span>`;
+        setTimeout(() => {
+          btnElement.classList.remove("added-success");
+          btnElement.innerHTML = originalHTML;
+        }, 1400);
+      }
+
+      renderCart();
+      showToast(`Added "${product.name.slice(0, 28)}..." to Cart!`, "success");
+    }
+
+    // 4. Render Slide-Over Cart Drawer
+    function renderCart() {
+      const container = document.getElementById("cartItemsContainer");
+      const badge = document.getElementById("cartCountBadge");
+      const totalEl = document.getElementById("cartTotalPrice");
+
+      const totalCount = cart.reduce((sum, item) => sum + item.qty, 0);
+      badge.textContent = totalCount;
+
+      if (cart.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-16 text-slate-400">
+            <i class="fa-solid fa-cart-arrow-down text-4xl mb-3 text-slate-600"></i>
+            <p class="font-semibold text-white">Your cart is empty</p>
+            <p class="text-xs mt-1">Explore our auto-synced dropshipping catalog.</p>
+          </div>
+        `;
+        totalEl.textContent = "$0.00";
+        return;
+      }
+
+      let grandTotal = 0;
+      container.innerHTML = cart.map(item => {
+        const product = products.find(p => p.id === item.id);
+        if (!product) return "";
+        const itemTotal = product.price * item.qty;
+        grandTotal += itemTotal;
+
+        return `
+          <div class="flex items-center gap-3 bg-slate-900/90 p-3 rounded-2xl border border-white/10">
+            <img src="${product.image}" alt="${product.name}" class="w-16 h-16 rounded-xl object-cover">
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-bold text-white truncate">${product.name}</p>
+              <p class="text-[11px] text-cyan-400">${product.supplier}</p>
+              <p class="text-sm font-extrabold text-white mt-1">$${itemTotal.toFixed(2)}</p>
+            </div>
+            <div class="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-xl border border-slate-800">
+              <button onclick="updateCartQty(${product.id}, -1)" class="w-6 h-6 rounded text-slate-300 hover:bg-slate-800">-</button>
+              <span class="text-xs font-bold px-1">${item.qty}</span>
+              <button onclick="updateCartQty(${product.id}, 1)" class="w-6 h-6 rounded text-slate-300 hover:bg-slate-800">+</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      totalEl.textContent = `$${grandTotal.toFixed(2)}`;
+    }
+
+    function updateCartQty(productId, delta) {
+      const idx = cart.findIndex(i => i.id === productId);
+      if (idx === -1) return;
+      cart[idx].qty += delta;
+      if (cart[idx].qty <= 0) cart.splice(idx, 1);
+      renderCart();
+    }
+
+    function toggleCart(open) {
+      const drawer = document.getElementById("cartDrawer");
+      const backdrop = document.getElementById("cartDrawerBackdrop");
+      if (open) {
+        backdrop.classList.remove("hidden");
+        drawer.classList.remove("translate-x-full");
+      } else {
+        backdrop.classList.add("hidden");
+        drawer.classList.add("translate-x-full");
+      }
+    }
+
+    // 5. Place Order & Auto-Fulfill with Supplier
+    function placeCustomerOrder() {
+      if (cart.length === 0) {
+        showToast("Your cart is empty!", "error");
+        return;
+      }
+
+      const nameInput = document.getElementById("checkoutName").value.trim() || "Valued Customer";
+      const totalText = document.getElementById("cartTotalPrice").textContent;
+
+      // Deduct stock automatically
+      cart.forEach(item => {
+        const prod = products.find(p => p.id === item.id);
+        if (prod) {
+          prod.stock = Math.max(0, prod.stock - item.qty);
+        }
+      });
+
+      const newOrder = {
+        orderId: "ORD-" + Math.floor(10000 + Math.random() * 90000),
+        customer: nameInput,
+        items: `${cart.length} Synced Product(s)`,
+        total: totalText,
+        supplier: "Auto-Forwarded to AliExpress / DSers",
+        trackingId: "SYNC" + Math.floor(10000000 + Math.random() * 90000000) + "CN",
+        status: "Fulfilled Automatically via Supplier API"
+      };
+
+      orders.unshift(newOrder);
+      cart = [];
+      renderCart();
+      renderProducts();
+      renderAdminInventoryTable();
+      renderOrdersList();
+      toggleCart(false);
+
+      showToast(`🎉 Order ${newOrder.orderId} Placed & Sent to Supplier!`, "success");
+      switchPage("user-dashboard");
+    }
+
+    // 6. Admin Inventory Sync Table & Stock Simulator (Page 20)
+    function renderAdminInventoryTable() {
+      const tbody = document.getElementById("adminInventoryTableBody");
+      tbody.innerHTML = products.map(p => {
+        const isOut = p.stock <= 0;
+        const margin = (((p.price - p.supplierCost) / p.price) * 100).toFixed(0);
+
+        return `
+          <tr class="hover:bg-white/5 transition">
+            <td class="py-3.5 px-4 flex items-center gap-3">
+              <img src="${p.image}" class="w-10 h-10 rounded-lg object-cover">
+              <div>
+                <p class="font-bold text-white text-xs">${p.name.slice(0, 38)}...</p>
+                <p class="text-[11px] text-slate-400">ID: #SUP-${p.id}</p>
+              </div>
+            </td>
+            <td class="py-3.5 px-4 text-xs text-cyan-300 font-semibold">${p.supplier}</td>
+            <td class="py-3.5 px-4 text-xs text-slate-300">$${p.supplierCost.toFixed(2)}</td>
+            <td class="py-3.5 px-4 text-xs">
+              <span class="font-bold text-emerald-400">$${p.price.toFixed(2)}</span>
+              <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded ml-1">${margin}% Margin</span>
+            </td>
+            <td class="py-3.5 px-4">
+              <input 
+                type="number" 
+                min="0" 
+                value="${p.stock}" 
+                onchange="updateProductStock(${p.id}, this.value)"
+                class="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-bold text-white focus:border-cyan-400"
+              >
+            </td>
+            <td class="py-3.5 px-4">
+              ${
+                isOut
+                  ? `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-red-500/20 text-red-400 border border-red-500/30">OUT OF STOCK</span>`
+                  : `<span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">IN STOCK (${p.stock})</span>`
+              }
+            </td>
+            <td class="py-3.5 px-4 text-right space-x-1">
+              <button onclick="updateProductStock(${p.id}, 0)" class="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-300 text-xs font-bold transition">
+                Set 0 (Sold Out)
+              </button>
+              <button onclick="updateProductStock(${p.id}, 50)" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 text-xs font-bold transition">
+                Restock +50
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      updateAdminMetrics();
+    }
+
+    function updateProductStock(productId, newStockValue) {
+      const prod = products.find(p => p.id === productId);
+      if (!prod) return;
+      prod.stock = Math.max(0, parseInt(newStockValue) || 0);
+
+      renderProducts();
+      renderAdminInventoryTable();
+
+      if (prod.stock === 0) {
+        showToast(`⚠️ Stock Alert: "${prod.name.slice(0, 24)}..." is now OUT OF STOCK on Storefront!`, "error");
+      } else {
+        showToast(`✓ Synced: "${prod.name.slice(0, 24)}..." stock updated to ${prod.stock}`, "success");
+      }
+    }
+
+    function restockSingleProduct(productId) {
+      updateProductStock(productId, 35);
+    }
+
+    function simulateRandomStockout() {
+      const inStockItems = products.filter(p => p.stock > 0);
+      if (inStockItems.length === 0) return;
+      const randomProd = inStockItems[Math.floor(Math.random() * inStockItems.length)];
+      updateProductStock(randomProd.id, 0);
+    }
+
+    // 7. SDD Animation #4: Global Supplier API Sync with Shimmer & Progress Bar
+    function triggerGlobalSync() {
+      const skeleton = document.getElementById("productSkeletonGrid");
+      const grid = document.getElementById("productGrid");
+      const progressBox = document.getElementById("syncProgressContainer");
+      const progressBar = document.getElementById("syncProgressBar");
+      const quickIcon = document.getElementById("quickSyncIcon");
+      const adminIcon = document.getElementById("adminSyncSpinIcon");
+
+      quickIcon.classList.add("fa-spin");
+      adminIcon.classList.add("fa-spin");
+
+      // Show skeleton shimmer on storefront
+      skeleton.classList.remove("hidden");
+      skeleton.classList.add("grid");
+      grid.classList.add("opacity-30");
+
+      if (progressBox) {
+        progressBox.classList.remove("hidden");
+        progressBar.style.width = "35%";
+      }
+
+      setTimeout(() => {
+        if (progressBar) progressBar.style.width = "80%";
+      }, 450);
+
+      setTimeout(() => {
+        // Restore any 0 stock products or randomize slightly to simulate fresh supplier pull
+        products.forEach(p => {
+          if (p.stock === 0) p.stock = 25;
+        });
+
+        if (progressBar) progressBar.style.width = "100%";
+        quickIcon.classList.remove("fa-spin");
+        adminIcon.classList.remove("fa-spin");
+
+        skeleton.classList.add("hidden");
+        skeleton.classList.remove("grid");
+        grid.classList.remove("opacity-30");
+
+        document.getElementById("lastSyncTimeLabel").textContent = "(Last synced: Just now via DSers API)";
+        renderProducts();
+        renderAdminInventoryTable();
+        showToast("✓ All Supplier Inventories Synced via API!", "success");
+
+        setTimeout(() => {
+          if (progressBox) progressBox.classList.add("hidden");
+        }, 800);
+      }, 1100);
+    }
+
+    // 8. DSers 1-Click Product Importer (From Screenshot 1)
+    function renderSupplierPresets() {
+      const container = document.getElementById("supplierPresetsGrid");
+      container.innerHTML = supplierPresets.map((item, idx) => `
+        <div class="bg-slate-900/90 p-4 rounded-2xl border border-white/10 flex flex-col justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <img src="${item.image}" class="w-16 h-16 rounded-xl object-cover">
+            <div>
+              <span class="text-[10px] font-bold text-orange-400 uppercase">${item.supplier}</span>
+              <h4 class="font-bold text-white text-xs mt-0.5">${item.name}</h4>
+              <p class="text-xs text-emerald-400 font-bold mt-1">Cost: $${item.supplierCost.toFixed(2)} → Sell: $${item.price.toFixed(2)}</p>
+            </div>
+          </div>
+          <button onclick="importPresetToDSers(${idx})" class="w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow">
+            <i class="fa-solid fa-plus"></i> Add to DSers
+          </button>
+        </div>
+      `).join("");
+    }
+
+    function importPresetToDSers(idx) {
+      const item = supplierPresets[idx];
+      if (!item) return;
+
+      const newProd = {
+        id: Date.now(),
+        name: item.name,
+        category: item.category,
+        supplier: "AliExpress (DSers)",
+        supplierCost: item.supplierCost,
+        price: item.price,
+        oldPrice: +(item.price * 1.4).toFixed(2),
+        rating: 4.9,
+        reviews: 112,
+        stock: item.stock,
+        badge: "DSers Imported",
+        image: item.image
+      };
+
+      products.unshift(newProd);
+      triggerDSersSuccessPopup();
+      renderProducts();
+      renderAdminInventoryTable();
+    }
+
+    function importCustomToDSers() {
+      const title = document.getElementById("importTitle").value.trim() || "AliExpress Trending Gadget";
+      const cost = parseFloat(document.getElementById("importCost").value) || 10.00;
+      const price = parseFloat(document.getElementById("importPrice").value) || 24.99;
+      const stock = parseInt(document.getElementById("importStock").value) || 30;
+      const category = document.getElementById("importCategory").value;
+
+      const newProd = {
+        id: Date.now(),
+        name: title,
+        category: category,
+        supplier: "AliExpress (DSers)",
+        supplierCost: cost,
+        price: price,
+        oldPrice: +(price * 1.45).toFixed(2),
+        rating: 4.9,
+        reviews: 85,
+        stock: stock,
+        badge: "DSers Imported",
+        image: "https://images.unsplash.com/photo-1585565804112-f201f68c48b4?auto=format&fit=crop&w=800&q=80"
+      };
+
+      products.unshift(newProd);
+      triggerDSersSuccessPopup();
+      renderProducts();
+      renderAdminInventoryTable();
+    }
+
+    function triggerDSersSuccessPopup() {
+      const banner = document.getElementById("dsersSuccessBanner");
+      banner.classList.remove("hidden");
+      banner.classList.add("flex");
+      showToast("AliExpress product import success!", "success");
+      setTimeout(() => {
+        banner.classList.add("hidden");
+        banner.classList.remove("flex");
+      }, 4000);
+    }
+
+    // 9. Render Customer Orders & Tracking
+    function renderOrdersList() {
+      const container = document.getElementById("ordersListContainer");
+      container.innerHTML = orders.map(o => `
+        <div class="bg-slate-900/90 p-5 rounded-2xl border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2.5 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 font-bold text-xs">${o.orderId}</span>
+              <span class="text-xs text-slate-400">Customer: <strong class="text-white">${o.customer}</strong></span>
+            </div>
+            <p class="text-sm font-bold text-white">${o.items} — <span class="text-emerald-400">${o.total}</span></p>
+            <p class="text-xs text-slate-400">Supplier: ${o.supplier} • Tracking ID: <code class="text-purple-300">${o.trackingId}</code></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
+              <i class="fa-solid fa-truck-fast mr-1"></i> ${o.status}
+            </span>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    // 10. Category Filter, Search & Page Navigation
+    function filterCategory(category) {
+      activeCategory = category;
+      document.querySelectorAll(".cat-btn").forEach(btn => {
+        if (btn.dataset.cat === category) {
+          btn.className = "cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-cyan-400 text-slate-950 transition";
+        } else {
+          btn.className = "cat-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+        }
+      });
+      switchPage("storefront");
+      renderProducts();
+    }
+
+    function handleSearch(val) {
+      searchQuery = val;
+      switchPage("storefront");
+      renderProducts();
+    }
+
+    function switchPage(pageKey) {
+      document.querySelectorAll(".page-view").forEach(sec => sec.classList.add("hidden"));
+      const target = document.getElementById(`page-${pageKey}`);
+      if (target) target.classList.remove("hidden");
+
+      document.querySelectorAll(".nav-tab").forEach(tab => {
+        tab.classList.remove("bg-cyan-500", "text-slate-950");
+        tab.classList.add("text-slate-300");
+      });
+      const activeNav = document.getElementById(`nav-${pageKey}`);
+      if (activeNav) {
+        activeNav.classList.add("bg-cyan-500", "text-slate-950");
+        activeNav.classList.remove("text-slate-300");
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function updateAdminMetrics() {
+      const totalEl = document.getElementById("adminTotalProducts");
+      const lowEl = document.getElementById("adminLowStockCount");
+      if (totalEl) totalEl.textContent = products.length;
+      const outCount = products.filter(p => p.stock <= 0).length;
+      if (lowEl) lowEl.textContent = `${outCount} Out of Stock`;
+    }
+
+    // 11. SDD Animation #5: Slide-in Toast Notification
+    function showToast(message, type = "success") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      const bgClass = type === "error"
+        ? "bg-red-600/95 border-red-400"
+        : "bg-emerald-600/95 border-emerald-400";
+
+      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl text-white text-xs font-bold shadow-2xl border ${bgClass} transform translate-x-full opacity-0 transition-all duration-300`;
+      toast.innerHTML = `
+        <i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'} text-base"></i>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove("translate-x-full", "opacity-0");
+      });
+
+      setTimeout(() => {
+        toast.classList.add("translate-x-full", "opacity-0");
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    // Initialize App on Load
+    window.addEventListener("DOMContentLoaded", () => {
+      renderProducts();
+      renderCart();
+      renderAdminInventoryTable();
+      renderSupplierPresets();
+      renderOrdersList();
+    });
+  </script>
+</body>
+</html>
